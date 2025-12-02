@@ -7,7 +7,7 @@
 #include <ArduinoJson.h>
 
 // ---------------- CONFIG ----------------
-#define DHT_PIN 32 // DHT11 data pin
+#define DHT_PIN 17 // DHT22 data pin
 
 const char* WIFI_SSID = "NCW-Personal";
 const char* WIFI_PASS = "Ncw5201314";
@@ -32,11 +32,11 @@ void setup() {
   Serial.begin(115200);
   delay(100);
 
-  Serial.println("\n=== ESP32 DHT11 + SGP30 MQTT Test ===");
+  Serial.println("\n=== ESP32 DHT22 + SGP30 MQTT Test ===");
 
-  // Initialize DHT11
-  dht.setup(DHT_PIN, DHTesp::DHT11);
-  Serial.printf("DHT11 initialized. Min sampling period: %d ms\n",
+  // Initialize DHT22
+  dht.setup(DHT_PIN, DHTesp::DHT22);
+  Serial.printf("DHT22 initialized. Min sampling period: %d ms\n",
                 dht.getMinimumSamplingPeriod());
 
   // Initialize I2C and SGP30
@@ -68,10 +68,10 @@ void loop() {
   }
   mqttClient.loop();
 
-  // Read DHT11
+  // Read DHT22
   TempAndHumidity values = dht.getTempAndHumidity();
   if (dht.getStatus() != 0) {
-    Serial.println("DHT11 read error!");
+    Serial.println("DHT22 read error!");
     delay(3000);
     return;
   }
