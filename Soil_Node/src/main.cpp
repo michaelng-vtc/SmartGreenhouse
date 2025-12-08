@@ -61,7 +61,7 @@ void loop()
   //      越接近 4095 = 很乾 →   0%
 
   // ---------------- Create JSON ----------------
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
   doc["soil_raw"] = rawValue;
   doc["soil_percent"] = percent;
   doc["rssi"] = WiFi.RSSI();
@@ -91,7 +91,7 @@ void reconnectMQTT()
   while (!mqttClient.connected())
   {
     Serial.print("Connecting to MQTT broker...");
-    if (mqttClient.connect("ESP32_Soil_Client"))
+    if (mqttClient.connect("Soil_Node"))
     {
       Serial.println(" connected!");
     }

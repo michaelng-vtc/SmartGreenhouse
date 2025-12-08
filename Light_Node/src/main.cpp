@@ -87,7 +87,7 @@ void reconnectMQTT()
   while (!mqttClient.connected())
   {
     Serial.print("Connecting to MQTT broker...");
-    if (mqttClient.connect("ESP32_Client"))
+    if (mqttClient.connect("Light_Node"))
     {
       Serial.println(" connected!");
     }

@@ -7,7 +7,7 @@
 #include <ArduinoJson.h>
 
 // ---------------- CONFIG ----------------
-#define DHT_PIN 17 // DHT22 data pin
+#define DHT_PIN 17 // DHT11 data pin
 
 const char *WIFI_SSID = "NCW-Personal";
 const char *WIFI_PASS = "Ncw5201314";
@@ -15,7 +15,7 @@ const char *WIFI_PASS = "Ncw5201314";
 const char *MQTT_BROKER = "192.168.1.61"; // Raspberry Pi IP
 const int MQTT_PORT = 1883;
 
-const char *MQTT_TOPIC = "greenhouse/sensor/air"; // 修改不同 ESP32 topic
+const char *MQTT_TOPIC = "greenhouse/sensor/air_th"; // 修改不同 ESP32 topic
 // ----------------------------------------
 
 DHTesp dht;
@@ -131,7 +131,7 @@ void reconnectMQTT()
   while (!mqttClient.connected())
   {
     Serial.print("Connecting to MQTT broker...");
-    if (mqttClient.connect("ESP32_Client"))
+    if (mqttClient.connect("Air_TH_Node"))
     {
       Serial.println(" connected!");
     }
