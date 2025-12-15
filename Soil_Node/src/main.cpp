@@ -56,14 +56,10 @@ void loop()
 
   // ---------------- Read Soil Sensor ----------------
   int rawValue = analogRead(SOIL_PIN);
-  float percent = map(rawValue, 0, 4095, 100, 0);
-  // map：越接近 0 = 很濕  → 100%
-  //      越接近 4095 = 很乾 →   0%
 
   // ---------------- Create JSON ----------------
   JsonDocument doc;
   doc["soil_raw"] = rawValue;
-  doc["soil_percent"] = percent;
   doc["rssi"] = WiFi.RSSI();
 
   char jsonBuffer[256];

@@ -8,8 +8,8 @@
 
 // ---------------- CONFIG ----------------
 #define DHT_PIN 18 // DHT11 data pin
-#define AIR_TX_PIN 17 
-#define AIR_RX_PIN 16 
+#define AIR_TX_PIN 17
+#define AIR_RX_PIN 16
 
 const char *WIFI_SSID = "NCW-Personal";
 const char *WIFI_PASS = "Ncw5201314";
@@ -33,8 +33,8 @@ float latestCH2O = 0.0;
 uint16_t latestCO2 = 0;
 
 // Forward declaration
-void reconnectMQTT();
 bool readAirSensorPacket();
+void reconnectMQTT();
 
 void setup()
 {
@@ -47,33 +47,33 @@ void setup()
   dht.setup(DHT_PIN, DHTesp::DHT11);
   Serial.printf("DHT11 initialized. Min sampling period: %d ms\n",
                 dht.getMinimumSamplingPeriod());
-  
+
   // Initialize Air Quality Sensor Serial
   airSensorSerial.begin(9600, SERIAL_8N1, AIR_RX_PIN, AIR_TX_PIN);
   Serial.println("CO2/VOC/CH2O Sensor started");
 
   // Connect to Wi-Fi
-  // WiFi.begin(WIFI_SSID, WIFI_PASS);
-  // Serial.print("Connecting to Wi-Fi");
-  // while (WiFi.status() != WL_CONNECTED)
-  // {
-  //   delay(500);
-  //   Serial.print(".");
-  // }
-  // Serial.println("\nWi-Fi connected! IP: " + WiFi.localIP().toString());
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWi-Fi connected! IP: " + WiFi.localIP().toString());
 
   // Setup MQTT
-  // mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+  mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
 }
 
 void loop()
 {
   // Ensure MQTT connection
-  // if (!mqttClient.connected())
-  // {
-  //   reconnectMQTT();
-  // }
-  // mqttClient.loop();
+  if (!mqttClient.connected())
+  {
+    reconnectMQTT();
+  }
+  mqttClient.loop();
 
   static uint32_t last = 0;
   if (millis() - last > 10000) // every 10 seconds
@@ -95,8 +95,8 @@ void loop()
     JsonDocument doc;
     doc["temp"] = values.temperature;
     doc["humidity"] = values.humidity;
-    doc["tvoc"] = latestTVOC;
-    doc["ch2o"] = latestCH2O;
+    // doc["tvoc"] = latestTVOC;
+    // doc["ch2o"] = latestCH2O;
     doc["co2"] = latestCO2;
     doc["rssi"] = WiFi.RSSI();
 
@@ -124,7 +124,7 @@ void loop()
 // ---------------- Air Sensor Packet Reading ----------------
 bool readAirSensorPacket()
 {
-  static uint8_t packet[9];
+  static uint8_t packet[packetSize];
   static uint8_t index = 0;
   static bool headerFound = false;
 
@@ -134,56 +134,54 @@ bool readAirSensorPacket()
 
     if (!headerFound)
     {
-      if (byte == 0x2C)
+      if (index == 0)
       {
-        packet[0] = byte;
-        if (airSensorSerial.available())
+        if (byte == 0x2C)
         {
-          byte = airSensorSerial.read();
-          if (byte == 0xE4)
-          {
-            packet[1] = byte;
-            index = 2;
-            headerFound = true;
-          }
+          packet[index++] = byte;
         }
+        continue;
       }
-      continue;
+      else if (index == 1)
+      {
+        if (byte == 0xE4)
+        {
+          packet[index++] = byte;
+          headerFound = true;
+        }
+        else
+        {
+          index = 0;
+        }
+        continue;
+      }
     }
-
-    packet[index++] = byte;
-    if (index >= packetSize)
+    if (headerFound)
     {
-      index = 0;
-      headerFound = false;
-
-      uint8_t checksum = 0;
-      for (int i = 0; i < 8; i++)
+      packet[index++] = byte;
+      if (index >= packetSize)
       {
-        checksum += packet[i];
-      }
-      checksum &= 0xFF;
-
-      if (checksum != packet[8])
-      {
-        Serial.println("Checksum error");
-        Serial.print("Packet: ");
-        for (int i = 0; i < packetSize; i++)
+        index = 0;
+        headerFound = false;
+        uint8_t checksum = 0;
+        for (int i = 0; i < 8; i++)
         {
-          Serial.print(packet[i], HEX);
-          Serial.print(" ");
+          checksum += packet[i];
         }
-        Serial.println();
-        return false;
-      }
+        checksum &= 0xFF;
 
-      latestTVOC = ((packet[2] << 8) | packet[3]) * 0.001f;
-      latestCH2O = ((packet[4] << 8) | packet[5]) * 0.001f;
-      latestCO2 = (packet[6] << 8) | packet[7];
-      return true;
+        if (checksum != packet[8])
+        {
+          Serial.println("Checksum error");
+          return false;
+        }
+        latestTVOC = ((packet[2] << 8) | packet[3]) * 0.001f;
+        latestCH2O = ((packet[4] << 8) | packet[5]) * 0.001f;
+        latestCO2 = (packet[6] << 8) | packet[7];
+        return true;
+      }
     }
   }
-
   return false;
 }
 
